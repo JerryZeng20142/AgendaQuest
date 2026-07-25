@@ -1,53 +1,116 @@
-# Agenda Quest Web
+# Agenda Quest
 
-Agenda Quest 的 React 19 + Vite 8 + TypeScript 6 Web 客户端，UI 使用 Shadcn/ui `radix-nova`。
+**一句话**：极低成本记录，无损 AI 分析，把被海量信息淹没的灵感与待办转化为可追溯、可执行的行动——你的个人分身。
 
-## 本地开发
+## 项目简介
 
-```bash
-npm install
-npm run dev
+Agenda Quest 是一个 AI 驱动的自动化收集、分析与任务执行平台。它解决一个根本问题：**灵感稍纵即逝、信息零散割裂、规划成本极高**——人们被信息淹没，却在行动上瘫痪。
+
+产品的核心哲学是**先接住信息，再理解信息**。用户只需随手一记，系统在后台全量保存原文，然后由 AI 无损地分析、提取任务、关联话题、生成建议步骤。整个过程不打断用户，不做不可逆操作，不伪造 AI 已完成的假象。
+
+产品只有两个一级入口——**收集**（完整时间信息流）和**行动**（待处理事项），拒绝演化为后台管理界面。每条记录都可追溯回原始输入，每条结论都能跳到原文，绝不会用摘要替代原始信息。
+
+## 详细介绍
+
+### 为什么需要 Agenda Quest
+
+现代人普遍面临两个层面的撕裂：
+
+1. **信息过载**：社交消息、工作对话、灵感闪念散落在各个平台，无从统一管理。现有工具鼓励「先分类再记录」，而分类本身就是一种认知负担。
+2. **行动瘫痪**：任务结构化耗时耗力。一个模糊的想法要变成可执行的 Todo，中间要经历「理解→拆解→排期→提醒」的全链路手动操作，摩擦高到让人直接拖延。
+
+Agenda Quest 的答案是：**AI 不该替你做摘要，而该替你做索引和执行推演。**
+
+### 信息架构
+
+产品严格遵循两级入口：
+
+| 页面 | 定位 | 展示内容 |
+|------|------|----------|
+| **收集**（Collect） | 完整时间信息流 | 原始记录 + AI 分析结果混排，气泡式布局，日分隔线。输入框固定在底部，支持文字和图片。 |
+| **行动**（Act） | 待处理事项 | 待确认 / 现在执行 / 今日任务 / 即将到期 / 进行中 / 已完成，紧凑任务行，常用操作一步完成。 |
+
+设置、任务详情、图片预览、归档等均为二级视图，不升格为主导航。
+
+### 核心流程
+
+```
+随手记录 → 保存原文 → AI 后台分析 → 提取候选任务 → 用户确认/修改 → 执行/交给 Agent → 完成归档
 ```
 
-本地预览必须显式设置 `VITE_DATA_MODE=preview`，同时不得设置 `VITE_API_BASE_URL`。预览样本集中维护在 `src/mocks/preview-agenda.mock.ts`，不会持久化；长期记忆、Agent、截图分析服务和云同步均显示为未连接。未声明数据模式时，客户端会阻止进入业务页，不会自行选择或回退数据来源。
+**关键规则**：
+- 先保存原始记录，再做 AI 分析。AI 失败不影响原文。
+- 高置信度结果自动进入「待确认」，低置信度标记不确定项，不擅自补成事实。
+- 高风险外部操作（发送消息、付款、删除数据）执行前必须逐项确认。
+- 删除原始记录会级联清除引用它的任务和活动，不留悬空记录。
 
-## 云端模式
+### AI 能力边界
 
-根据 `.env.example` 设置：
+| 能力 | 状态策略 |
+|------|----------|
+| 内容分类（任务/想法/资料/事件） | AI 实时分析，不确定时标注 |
+| 任务生成 | 从记录提取标题、下一步、截止、子步骤 |
+| 截图分析 | 需要独立配置，未连接时明确提示 |
+| 长期记忆 | 云端记录用户偏好和历史模式，未连接时提示 |
+| Agent 自动化 | 分级授权（低/中/高），逐项确认动作 |
 
-- `VITE_DATA_MODE=cloud`
-- `VITE_API_BASE_URL=https://api.example.com`
+所有 AI 能力按真实接入程度展示，不伪装为可用状态。
 
-云端认证使用 HttpOnly Cookie。API Key 只提交给后端密钥服务，不写入 Local Storage、Session Storage 或 IndexedDB。生产环境未配置 API 地址时，客户端会阻止进入业务页，不会静默切换预览数据。
+### 技术生态
 
-### 云端接口不变量
+当前提供两个客户端和一个服务端：
 
-前端契约集中在 `src/api/agenda-api.ts`，运行时响应由 `src/api/schemas.ts` 校验。服务端接入必须保证：
+```
+Agenda Quest
+├── apps/web/          ← Web 客户端（React 19 + Vite 8 + TypeScript 6）
+│                        UI 使用 Shadcn/ui（radix-nova 风格）
+│                        支持预览模式（本地 mock 数据）和云端模式（真实后端）
+│                        WCAG 2.1 无障碍，路由级代码分包
+│
+├── apps/client/      ← Lynx 客户端（ReactLynx）
+│                        与 Web 共享领域模型和设计令牌，不共享 UI 组件
+│
+└── server/           ← FastAPI 后端（Python 3.14+）
+                          SQLite + aiosqlite 异步存储
+                          JWT + bcrypt 认证，HttpOnly Cookie 会话
+                          SSE 实时事件推送
+                          幂等键 + If-Match 冲突检测
+```
 
-- `POST /records` 只有在原始内容完成持久化后才返回成功；附件上传和 AI 分析是后续独立操作，失败不得回滚或删除原文。
-- 任务开始、延期和完成分别使用 `/tasks/:id/commands/start`、`postpone`、`complete`。服务端在同一事务中生成时间、延期次数、修订号、提醒终止和审计事件。
-- 任务详情使用带 `If-Match` 的 `PATCH /tasks/:id`；冲突必须返回可识别的 `409` 或 `412`，不得静默覆盖其他客户端的修订。
-- `POST /tasks` 将 `clientRequestId` 同时作为请求体字段与 `Idempotency-Key`。服务端按当前登录用户隔离幂等键：同键同内容必须返回首次结果，同键不同内容或跨记录复用必须拒绝。
-- 永久删除任务时必须同时解除原始记录的 `taskId`，并清理周报和 Agent 运行引用；永久删除原始记录时必须处理所有反向引用。
-- Agent 计划必须返回稳定动作 ID、短时有效的 `confirmationId` 与 `expiresAt`。授权请求回传 `confirmationId`、授权范围和逐项确认的动作 ID；服务端必须拒绝过期、重复或不属于该计划的确认。
-- 附件读取通过 `/records/:recordId/attachments/:attachmentId/download` 返回短时有效的 HTTPS 地址，不能在快照中长期暴露对象存储地址。
-- `/settings/ai/models` 由后端使用受保护的密钥查询真实模型；长期记忆、Agent、截图分析和同步状态只能返回实际观测结果。
-- `/events` 使用携带 Cookie 的 SSE，消息体为 `{ "scope": "agenda" | "sync" | "all" }`；前端收到事件后重新校验云端状态，并以定期轮询作为断线兜底。
-- 归档保留策略由 `/settings/retention` 保存并在云端执行，前端不以本地定时器模拟删除。
+### 设计哲学
 
-原始证据状态遵循以下字段不变量，服务端不得用摘要冒充原文：
+**1. 不做 AI 对话页**——绝不内置「通用 AI 聊天」界面。AI 在后台作为推理引擎运行，用户看到的始终是结构化的任务和信息流。
 
-| `evidenceState`     | `rawContent`  | `retainedSummary` |
-| ------------------- | ------------- | ----------------- |
-| `full`              | 必须存在      | 可选              |
-| `summary-only`      | 必须为 `null` | 必须存在          |
-| `deleted-by-policy` | 必须为 `null` | 必须不存在        |
+**2. 反对盲目摘要**——所有 AI 输出都是可追溯的。语气、幽默感、上下文语境决定了用户如何应对一件事，因此必须能随时回到原始句子确认。
 
-## 质量检查
+**3. 原生效率感**——桌面浅灰外框加白色工作区，移动端全屏。无水球、无渐变、无品牌徽章、无营销文案。信息密度以扫描效率为优先。
+
+**4. 诚实的状态**——未配置、未连接、未验证的状态明确展示。不将预览数据伪造成真实数据，不让用户在不确定的环境中做决策。
+
+### 质量关卡
+
+每次改动至少经过：
 
 ```bash
-npm run lint
-npm run typecheck
-npm run test
-npm run build
+npm run typecheck   # TypeScript 严格模式
+npm run lint        # ESLint
+npm run test        # Vitest（44 个测试，覆盖核心数据流和 UI 交互）
+npm run build       # Vite 构建
 ```
+
+涉及 UI 的改动额外经过桌面视口、移动端 390×844、深浅色模式、纯键盘导航的真实浏览器验证。
+
+### 运行
+
+```bash
+# 预览模式（无需后端）
+VITE_DATA_MODE=preview npm run dev
+
+# 云端模式（需要后端）
+VITE_DATA_MODE=cloud VITE_API_BASE_URL=http://localhost:8000 npm run dev
+
+# 启动后端
+cd server && pip install -r requirements.txt && uvicorn main:app --reload
+```
+
+演示用户：`demo@agendaquest.com` / `demo123`
