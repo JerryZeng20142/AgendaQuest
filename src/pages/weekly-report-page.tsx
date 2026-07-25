@@ -9,6 +9,7 @@ import {
 import { Link } from "react-router"
 
 import { PageEmpty, PageError, PageLoading } from "@/components/page-state"
+import { useDocumentTitle } from "@/hooks/use-document-title"
 import {
   Accordion,
   AccordionContent,
@@ -42,6 +43,7 @@ function ReportSection({
 }
 
 export default function WeeklyReportPage() {
+  useDocumentTitle("周报")
   const snapshot = useAgendaSnapshot()
 
   if (snapshot.isLoading) return <PageLoading />

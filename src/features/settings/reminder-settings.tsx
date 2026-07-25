@@ -93,7 +93,7 @@ export function ReminderSettings({ value }: { value: ReminderSettingsType }) {
       title="提醒规则"
       description="设置默认提醒链路；单个任务仍可在行动页调整。"
     >
-      <form onSubmit={submit} className="max-w-2xl">
+      <form onSubmit={submit}>
         <FieldGroup>
           <RadioGroup
             name="reminderMode"
@@ -113,7 +113,7 @@ export function ReminderSettings({ value }: { value: ReminderSettingsType }) {
                     所有任务默认使用同一套提醒参数。
                   </FieldDescription>
                 </FieldContent>
-                <RadioGroupItem value="global" />
+                <RadioGroupItem value="global" aria-label="使用全局规则" />
               </Field>
             </FieldLabel>
             <FieldLabel>
@@ -124,7 +124,7 @@ export function ReminderSettings({ value }: { value: ReminderSettingsType }) {
                     每个任务单独决定提醒时间。
                   </FieldDescription>
                 </FieldContent>
-                <RadioGroupItem value="per-task" />
+                <RadioGroupItem value="per-task" aria-label="按任务设置" />
               </Field>
             </FieldLabel>
           </RadioGroup>
@@ -151,6 +151,7 @@ export function ReminderSettings({ value }: { value: ReminderSettingsType }) {
                 onCheckedChange={(checked) =>
                   toggleChannel("in-app", checked === true)
                 }
+                aria-label="应用内提醒"
               />
               <FieldContent>
                 <FieldTitle>应用内提醒</FieldTitle>

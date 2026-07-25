@@ -43,27 +43,27 @@ describe("application access flow", () => {
     await user.click(screen.getByRole("button", { name: "完成设置" }))
 
     expect(
-      await screen.findByRole("heading", { name: "我的收集箱" })
+      await screen.findByRole("heading", { name: "收集" }) // from inbox-page
     ).toBeInTheDocument()
-    const mainNavigation = screen.getByRole("tablist", { name: "主导航" })
+    const mainNavigation = screen.getByRole("tablist", { name: "主页面" })
     expect(
       within(mainNavigation)
         .getAllByRole("tab")
         .map((tab) => tab.textContent)
-    ).toEqual(["收集箱", "行动台", "简报"])
+    ).toEqual(["收集", "行动"])
     expect(screen.queryByText("Agenda Quest")).not.toBeInTheDocument()
     expect(
-      screen.queryByRole("tab", { name: "已归档" })
+      screen.queryByText("已归档")
     ).not.toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "打开设置" }))
     expect(
-      await screen.findByRole("heading", { name: "设置" })
+      await screen.findByRole("tab", { name: "账户与同步" })
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole("tablist", { name: "主导航" })
+      screen.queryByRole("tablist", { name: "主页面" })
     ).not.toBeInTheDocument()
-    expect(screen.getByRole("radio", { name: "浅色主题" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "浅色主题" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "退出登录" })).toBeInTheDocument()
     window.history.pushState({}, "", "/archive")
     window.dispatchEvent(new PopStateEvent("popstate"))
@@ -98,7 +98,7 @@ describe("application access flow", () => {
       </AppProviders>
     )
     expect(
-      await screen.findByRole("heading", { name: "我的收集箱" })
+      await screen.findByRole("heading", { name: "我的收集箱" }) // inline test stub
     ).toBeInTheDocument()
 
     const quickCaptureButton = await screen.findByRole("button", {

@@ -74,25 +74,51 @@ export function App() {
 
   return (
     <BrowserRouter>
-      <Suspense fallback={<PageLoading />}>
-        <Routes>
-          <Route path="/login" element={<LoginRoute />} />
-          <Route path="/onboarding" element={<OnboardingRoute />} />
-          <Route element={<RequireSession />}>
-            <Route element={<AppShell />}>
-              <Route path="/inbox" element={<InboxPage />} />
-              <Route path="/action" element={<ActionPage />} />
-              <Route
-                path="/archive"
-                element={<Navigate to="/settings?tab=archive" replace />}
-              />
-              <Route path="/weekly" element={<WeeklyReportPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-            </Route>
+      <Routes>
+        <Route path="/login" element={<LoginRoute />} />
+        <Route path="/onboarding" element={<OnboardingRoute />} />
+        <Route element={<RequireSession />}>
+          <Route element={<AppShell />}>
+            <Route
+              path="/inbox"
+              element={
+                <Suspense fallback={<PageLoading />}>
+                  <InboxPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/action"
+              element={
+                <Suspense fallback={<PageLoading />}>
+                  <ActionPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/archive"
+              element={<Navigate to="/settings?tab=archive" replace />}
+            />
+            <Route
+              path="/weekly"
+              element={
+                <Suspense fallback={<PageLoading />}>
+                  <WeeklyReportPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <Suspense fallback={<PageLoading />}>
+                  <SettingsPage />
+                </Suspense>
+              }
+            />
           </Route>
-          <Route path="*" element={<Navigate to="/inbox" replace />} />
-        </Routes>
-      </Suspense>
+        </Route>
+        <Route path="*" element={<Navigate to="/inbox" replace />} />
+      </Routes>
     </BrowserRouter>
   )
 }

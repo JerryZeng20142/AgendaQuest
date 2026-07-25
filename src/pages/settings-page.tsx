@@ -1,9 +1,9 @@
 import { useSearchParams } from "react-router"
 
 import { PageError, PageLoading } from "@/components/page-state"
+import { useDocumentTitle } from "@/hooks/use-document-title"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AccountSettings } from "@/features/settings/account-settings"
-import { ApiSettings } from "@/features/settings/api-settings"
 import { CapabilitySettings } from "@/features/settings/capability-settings"
 import { MemorySettings } from "@/features/settings/memory-settings"
 import { ReminderSettings } from "@/features/settings/reminder-settings"
@@ -13,7 +13,6 @@ import { ArchivePage } from "@/pages/archive-page"
 
 const settingTabs = [
   { value: "general", label: "账户与同步" },
-  { value: "ai", label: "AI 与 API" },
   { value: "reminders", label: "提醒" },
   { value: "weekly", label: "周报" },
   { value: "memory", label: "记忆与数据" },
@@ -28,6 +27,9 @@ export default function SettingsPage() {
   const tab = settingTabs.some((item) => item.value === requestedTab)
     ? requestedTab!
     : "general"
+  const tabLabel =
+    settingTabs.find((item) => item.value === tab)?.label ?? "设置"
+  useDocumentTitle(`设置 · ${tabLabel}`)
 
   if (snapshot.isLoading) return <PageLoading />
   if (snapshot.isError)
@@ -68,12 +70,6 @@ export default function SettingsPage() {
         <div className="px-4 pt-6 md:px-0">
           <TabsContent value="general">
             <AccountSettings />
-          </TabsContent>
-          <TabsContent value="ai">
-            <ApiSettings
-              key={`${snapshot.data.apiSettings.endpoint}-${snapshot.data.apiSettings.model}-${snapshot.data.apiSettings.apiKeyConfigured}`}
-              value={snapshot.data.apiSettings}
-            />
           </TabsContent>
           <TabsContent value="reminders">
             <ReminderSettings

@@ -1,7 +1,6 @@
 import type { AgendaApi } from "@/api/agenda-api"
 import type {
   AgendaRecord,
-  AgendaSnapshot,
   AgendaTask,
   AgentPlan,
   AgentRun,
@@ -23,6 +22,10 @@ import type {
   UpdateTaskDetailsInput,
   WeeklyReportSchedule,
 } from "@/lib/types"
+import {
+  createMockAgendaSnapshot,
+  createMockPreviewSession,
+} from "@/mocks/preview-agenda.mock"
 
 function clone<T>(value: T) {
   return structuredClone(value)
@@ -32,90 +35,10 @@ function makeId(prefix: string) {
   return `${prefix}_${crypto.randomUUID()}`
 }
 
-function createPreviewSession(): Session {
-  return {
-    user: {
-      id: "preview-user",
-      email: "preview@agenda.quest",
-      displayName: "预览用户",
-      onboardingCompleted: false,
-    },
-    authenticatedAt: new Date().toISOString(),
-  }
-}
-
-function createPreviewSnapshot(): AgendaSnapshot {
-  const observedAt = new Date().toISOString()
-  return {
-    records: [],
-    tasks: [],
-    agentRuns: [],
-    memories: [],
-    reminderSettings: {
-      mode: "global",
-      channels: ["in-app"],
-      cooldownMinutes: 30,
-      dueWarningHours: 2,
-      desktopNotificationsEnabled: false,
-    },
-    weeklySchedule: {
-      enabled: false,
-      weekday: "星期日",
-      time: "20:00",
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      channels: ["in-app"],
-    },
-    apiSettings: {
-      endpoint: "",
-      model: "",
-      apiKeyConfigured: false,
-    },
-    retentionPolicy: {
-      mode: "keep-full",
-      updatedAt: observedAt,
-    },
-    capabilities: [
-      {
-        id: "memory",
-        name: "长期记忆",
-        state: "unavailable",
-        detail: "预览模式未连接云端记忆服务。",
-        updatedAt: observedAt,
-      },
-      {
-        id: "agent",
-        name: "自动 Agent",
-        state: "unavailable",
-        detail: "预览模式未连接 Agent 运行时。",
-        updatedAt: observedAt,
-      },
-      {
-        id: "screen-analysis",
-        name: "截图分析",
-        state: "unavailable",
-        detail: "预览模式未连接截图分析服务。",
-        updatedAt: observedAt,
-      },
-    ],
-    syncStatus: {
-      state: "unconfigured",
-      detail: "预览模式未连接云端同步服务。",
-    },
-    weeklyReport: {
-      weekOf: observedAt,
-      completedTaskIds: [],
-      postponedTasks: [],
-      unconvertedRecordIds: [],
-      referenceRecordIds: [],
-      recommendations: [],
-    },
-  }
-}
-
 export class PreviewAgendaApi implements AgendaApi {
   readonly mode = "preview" as const
   private activeSession: Session | null = null
-  private snapshot = createPreviewSnapshot()
+  private snapshot = createMockAgendaSnapshot()
   private readonly taskRequestIds = new Map<
     string,
     { taskId: string; fingerprint: string }
@@ -147,15 +70,15 @@ export class PreviewAgendaApi implements AgendaApi {
   }
 
   async login() {
-    this.snapshot = createPreviewSnapshot()
+    this.snapshot = createMockAgendaSnapshot()
     this.taskRequestIds.clear()
-    this.activeSession = createPreviewSession()
+    this.activeSession = createMockPreviewSession()
     return clone(this.activeSession)
   }
 
   async logout() {
     this.activeSession = null
-    this.snapshot = createPreviewSnapshot()
+    this.snapshot = createMockAgendaSnapshot()
     this.taskRequestIds.clear()
   }
 
@@ -319,6 +242,7 @@ export class PreviewAgendaApi implements AgendaApi {
   async startTask(input: TaskCommandInput) {
     return this.updateTask(input.taskId, input.revision, (task) => {
       task.status = "in-progress"
+      task.startedAt ??= new Date().toISOString()
     })
   }
 

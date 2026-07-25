@@ -33,7 +33,7 @@ export function AccountSettings() {
   return (
     <div>
       <SettingsSection title="账户" description="当前登录身份与数据空间。">
-        <div className="flex max-w-2xl flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <Avatar size="lg">
             {session?.user.avatarUrl ? (
               <AvatarImage
@@ -68,14 +68,17 @@ export function AccountSettings() {
           </Button>
         </div>
       </SettingsSection>
-      <SettingsSection title="外观" description="选择此设备使用的显示主题。">
+      <SettingsSection
+        title="外观"
+        description="选择此设备使用的显示模式与主题色。"
+      >
         <ThemeMenu />
       </SettingsSection>
       <SettingsSection
         title="云端同步"
         description="此状态由同步服务返回，不根据本地操作推断。"
       >
-        <div className="flex max-w-2xl flex-col gap-3 rounded-lg border p-4">
+        <div className="flex flex-col gap-3 rounded-lg border p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 font-medium">
               <Cloud className="size-4" aria-hidden="true" />

@@ -12,6 +12,9 @@
     <script>
       try {
         const storedTheme = localStorage.getItem("agenda-quest-theme")
+        const storedColorTheme = localStorage.getItem(
+          "agenda-quest-color-theme"
+        )
         const prefersDark = window.matchMedia(
           "(prefers-color-scheme: dark)"
         ).matches
@@ -22,6 +25,13 @@
             : "light"
         document.documentElement.classList.add(resolvedTheme)
         document.documentElement.style.colorScheme = resolvedTheme
+        document.documentElement.dataset.colorTheme = [
+          "neutral",
+          "green",
+          "blue",
+        ].includes(storedColorTheme)
+          ? storedColorTheme
+          : "green"
         if (resolvedTheme === "dark") {
           document
             .querySelector('meta[name="theme-color"]')

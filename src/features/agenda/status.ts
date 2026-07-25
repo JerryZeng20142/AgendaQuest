@@ -14,11 +14,11 @@ export function syncStatusLabel(status: SyncStatus) {
 
 export function recordStatusLabel(status: RecordStatus) {
   const labels: Record<RecordStatus, string> = {
-    queued: "等待处理",
-    "needs-review": "需要你确认",
-    ready: "待确认任务",
+    queued: "待分析",
+    "needs-review": "待确认",
+    ready: "已就绪",
     archived: "已归档",
-    failed: "处理失败",
+    failed: "分析失败",
   }
 
   return labels[status]

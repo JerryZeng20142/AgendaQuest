@@ -14,7 +14,11 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export function PageLoading() {
   return (
-    <div className="flex flex-col gap-3 p-4 md:p-6" aria-label="正在加载">
+    <div
+      className="flex flex-col gap-3 p-4 md:p-6"
+      role="status"
+      aria-label="正在加载"
+    >
       <Skeleton className="h-8 w-48" />
       <Skeleton className="h-24 w-full" />
       <Skeleton className="h-24 w-full" />

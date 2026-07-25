@@ -1,5 +1,6 @@
 import { useState } from "react"
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   Bell,
@@ -13,6 +14,7 @@ import {
 import { useNavigate } from "react-router"
 
 import { useSession } from "@/auth/session-context"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
   Field,
@@ -22,6 +24,7 @@ import {
   FieldTitle,
 } from "@/components/ui/field"
 import { Kbd, KbdGroup } from "@/components/ui/kbd"
+import { useDocumentTitle } from "@/hooks/use-document-title"
 import { Progress } from "@/components/ui/progress"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import type { OnboardingSettings } from "@/lib/types"
@@ -66,6 +69,7 @@ const reminders = [
 ]
 
 export function OnboardingPage() {
+  useDocumentTitle("初始设置")
   const { completeOnboarding } = useSession()
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
@@ -253,9 +257,11 @@ export function OnboardingPage() {
           ) : null}
 
           {error ? (
-            <p className="mt-4 text-sm text-destructive" role="alert">
-              {error}
-            </p>
+            <Alert variant="destructive" className="mt-4">
+              <AlertCircle aria-hidden="true" />
+              <AlertTitle>设置未能保存</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           ) : null}
           <footer className="mt-auto flex items-center justify-between border-t pt-4">
             <Button

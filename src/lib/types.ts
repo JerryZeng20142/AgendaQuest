@@ -86,6 +86,7 @@ export interface AgendaTask {
   status: TaskStatus
   steps: TaskStep[]
   createdAt: IsoDateTime
+  startedAt?: IsoDateTime
   completedAt?: IsoDateTime
   archivedAt?: IsoDateTime
   completionSummary?: string

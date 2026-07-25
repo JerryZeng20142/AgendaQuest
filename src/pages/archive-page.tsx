@@ -147,7 +147,7 @@ export function ArchivePage({ embedded = false }: { embedded?: boolean }) {
       else await actions.restoreTask.mutateAsync(entry.id)
       toast.success(
         entry.kind === "record"
-          ? "记录已恢复到收集箱。"
+          ? "记录已恢复到收集。"
           : "任务已恢复到待确认。"
       )
     } catch (error) {

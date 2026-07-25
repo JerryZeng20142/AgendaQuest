@@ -118,6 +118,7 @@ export const agendaTaskSchema = z.object({
   ]),
   steps: z.array(taskStepSchema),
   createdAt: isoDateTime,
+  startedAt: isoDateTime.optional(),
   completedAt: isoDateTime.optional(),
   archivedAt: isoDateTime.optional(),
   completionSummary: z.string().optional(),

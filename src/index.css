@@ -81,6 +81,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* Product tokens */
+  --app-backdrop: #f4f7fb;
+  --workspace-shadow: 0 1px 0 rgba(94, 120, 165, 0.03);
 }
 
 .dark {
@@ -115,6 +118,79 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --app-backdrop: oklch(0.12 0.008 256);
+}
+
+[data-color-theme="green"] {
+  --primary: #147a4b;
+  --primary-foreground: #ffffff;
+  --accent: #e9f5ee;
+  --accent-foreground: #155f3d;
+  --ring: #24a66a;
+  --chart-1: #147a4b;
+  --chart-2: #2f6feb;
+  --chart-3: #b7791f;
+  --chart-4: #7557b7;
+  --chart-5: #667085;
+  --sidebar-primary: #147a4b;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e9f5ee;
+  --sidebar-accent-foreground: #155f3d;
+  --sidebar-ring: #24a66a;
+}
+
+.dark[data-color-theme="green"] {
+  --primary: #49c98a;
+  --primary-foreground: #07130d;
+  --accent: #173d2c;
+  --accent-foreground: #dff7e9;
+  --ring: #49c98a;
+  --chart-1: #49c98a;
+  --chart-2: #6ea8fe;
+  --chart-3: #e3ad55;
+  --chart-4: #b69bea;
+  --chart-5: #98a2b3;
+  --sidebar-primary: #49c98a;
+  --sidebar-primary-foreground: #07130d;
+  --sidebar-accent: #173d2c;
+  --sidebar-accent-foreground: #dff7e9;
+  --sidebar-ring: #49c98a;
+}
+
+[data-color-theme="blue"] {
+  --primary: #2f6feb;
+  --primary-foreground: #ffffff;
+  --accent: #edf4ff;
+  --accent-foreground: #173b75;
+  --ring: #2f6feb;
+  --chart-1: #2f6feb;
+  --chart-2: #147a4b;
+  --chart-3: #b7791f;
+  --chart-4: #7557b7;
+  --chart-5: #667085;
+  --sidebar-primary: #2f6feb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #edf4ff;
+  --sidebar-accent-foreground: #173b75;
+  --sidebar-ring: #2f6feb;
+}
+
+.dark[data-color-theme="blue"] {
+  --primary: #6ea8fe;
+  --primary-foreground: #081a33;
+  --accent: #172c4b;
+  --accent-foreground: #dfebff;
+  --ring: #6ea8fe;
+  --chart-1: #6ea8fe;
+  --chart-2: #49c98a;
+  --chart-3: #e3ad55;
+  --chart-4: #b69bea;
+  --chart-5: #98a2b3;
+  --sidebar-primary: #6ea8fe;
+  --sidebar-primary-foreground: #081a33;
+  --sidebar-accent: #172c4b;
+  --sidebar-accent-foreground: #dfebff;
+  --sidebar-ring: #6ea8fe;
 }
 
 @layer base {
@@ -122,7 +198,8 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply min-h-svh min-w-80 overflow-x-hidden bg-background text-foreground;
+    background: var(--app-backdrop);
+    @apply min-h-svh min-w-80 overflow-x-hidden text-foreground;
   }
   button:not(:disabled),
   [role="button"]:not(:disabled),
@@ -139,6 +216,206 @@
   html {
     @apply font-sans;
   }
+  /* 全局隐藏滚动条，保留滚动能力 */
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ---- Product layout ---- */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+@supports (height: 100dvh) {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+  }
+}
+
+html {
+  overflow-x: clip;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.app-frame {
+  height: 100%;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.workspace {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-card);
+  border-radius: 12px;
+  box-shadow: var(--workspace-shadow);
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body,
+  .workspace {
+    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+  }
+}
+
+.app-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 46px;
+  padding: 0 12px;
+  flex: none;
+}
+
+.app-username {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--color-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 9rem;
+}
+
+.app-surface-tabs {
+  margin-inline: auto;
+}
+
+.header-title {
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-foreground);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-spacer {
+  width: 28px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 110;
+  top: 8px;
+  left: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  font-size: 0.875rem;
+  text-decoration: none;
+  transform: translateY(-150%);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+.app-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Act feed ---- */
+
+.act-feed {
+  padding: 0 20px 28px;
+}
+
+.task-feed-item {
+  padding: 14px 0 12px;
+}
+
+.task-feed-item + .task-feed-item {
+  border-top: 1px solid var(--color-border);
+}
+
+.task-feed-main {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.task-feed-main:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid var(--color-ring);
+  outline-offset: 4px;
+}
+
+.task-feed-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-muted-foreground);
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.task-feed-main strong {
+  max-width: 100%;
+  color: var(--color-foreground);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.task-feed-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  min-height: 30px;
+  margin-top: 8px;
+}
+
+.task-feed-actions > :first-child {
+  margin-right: auto;
+}
+
+@media (max-width: 640px) {
+  .act-feed {
+    padding: 0 14px 24px;
+  }
+  .task-feed-item {
+    padding: 13px 0 10px;
+  }
+  .task-feed-main strong {
+    font-size: 15px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -149,5 +426,29 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---- Mobile: remove outer frame, fill the viewport ---- */
+
+@media (max-width: 640px) {
+  body {
+    background: var(--color-card);
+  }
+  .app-frame {
+    padding: 0;
+  }
+  .workspace {
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .app-topbar {
+    height: calc(44px + env(safe-area-inset-top));
+    gap: 8px;
+    padding: env(safe-area-inset-top) 8px 0;
+    box-sizing: border-box;
+  }
+  .app-username {
+    max-width: 5rem;
   }
 }

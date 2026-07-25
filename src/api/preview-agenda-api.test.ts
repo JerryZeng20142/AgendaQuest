@@ -27,18 +27,18 @@ describe("PreviewAgendaApi", () => {
     })
   })
 
-  it("starts without synthetic AI, memory, Agent, or report data", async () => {
+  it("loads the preview fixture without claiming live advanced services", async () => {
     const api = new PreviewAgendaApi()
     await api.login()
 
     const snapshot = await api.getSnapshot()
 
-    expect(snapshot.records).toEqual([])
-    expect(snapshot.tasks).toEqual([])
+    expect(snapshot.records.length).toBeGreaterThan(0)
+    expect(snapshot.tasks.length).toBeGreaterThan(0)
     expect(snapshot.agentRuns).toEqual([])
     expect(snapshot.memories).toEqual([])
-    expect(snapshot.weeklyReport.completedTaskIds).toEqual([])
-    expect(snapshot.weeklyReport.recommendations).toEqual([])
+    expect(snapshot.weeklyReport.completedTaskIds.length).toBeGreaterThan(0)
+    expect(snapshot.weeklyReport.recommendations.length).toBeGreaterThan(0)
     expect(snapshot.weeklySchedule.enabled).toBe(false)
     expect(
       snapshot.capabilities.every((item) => item.state === "unavailable")
@@ -48,15 +48,27 @@ describe("PreviewAgendaApi", () => {
   it("isolates data across logout, login, and API instances", async () => {
     const first = new PreviewAgendaApi()
     await first.login()
-    await createRecord(first)
+    const baselineIds = (await first.getSnapshot()).records.map(
+      (record) => record.id
+    )
+    const created = await createRecord(first)
 
     const second = new PreviewAgendaApi()
     await second.login()
-    expect((await second.getSnapshot()).records).toEqual([])
+    expect(
+      (await second.getSnapshot()).records.map((record) => record.id)
+    ).toEqual(baselineIds)
+    expect(
+      (await second.getSnapshot()).records.some(
+        (record) => record.id === created.id
+      )
+    ).toBe(false)
 
     await first.logout()
     await first.login()
-    expect((await first.getSnapshot()).records).toEqual([])
+    expect(
+      (await first.getSnapshot()).records.map((record) => record.id)
+    ).toEqual(baselineIds)
   })
 
   it("does not claim unavailable advanced capabilities can write data", async () => {
@@ -99,6 +111,7 @@ describe("PreviewAgendaApi", () => {
   it("creates at most one task per record and makes retries idempotent", async () => {
     const api = new PreviewAgendaApi()
     await api.login()
+    const initialTaskCount = (await api.getSnapshot()).tasks.length
     const record = await createRecord(api)
     const input = {
       clientRequestId: "request-1",
@@ -118,7 +131,7 @@ describe("PreviewAgendaApi", () => {
     await expect(
       api.createTask({ ...input, clientRequestId: "request-2" })
     ).rejects.toThrow("已转换为任务")
-    expect((await api.getSnapshot()).tasks).toHaveLength(1)
+    expect((await api.getSnapshot()).tasks).toHaveLength(initialTaskCount + 1)
   })
 
   it("keeps task commands atomic and revision guarded", async () => {
@@ -138,6 +151,7 @@ describe("PreviewAgendaApi", () => {
       revision: created.revision,
     })
     expect(started.status).toBe("in-progress")
+    expect(started.startedAt).toBeTruthy()
     await expect(
       api.completeTask({ taskId: created.id, revision: created.revision })
     ).rejects.toThrow("其他位置更新")
@@ -209,7 +223,11 @@ describe("PreviewAgendaApi", () => {
 
     const snapshot = await api.getSnapshot()
     expect(snapshot.memories).toEqual([])
-    expect(snapshot.weeklyReport.recommendations).toEqual([])
-    expect(snapshot.tasks).toEqual([])
+    expect(
+      snapshot.weeklyReport.recommendations.some(
+        (recommendation) => recommendation.content === "派生建议"
+      )
+    ).toBe(false)
+    expect(snapshot.tasks.some((item) => item.id === task.id)).toBe(false)
   })
 })

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react"
-import { ArrowRight, Bot, Cloud, Loader2 } from "lucide-react"
+import { ArrowRight, Cloud, Loader2 } from "lucide-react"
 import { useNavigate } from "react-router"
 import { z } from "zod"
 
@@ -22,6 +22,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { useDocumentTitle } from "@/hooks/use-document-title"
 
 const loginSchema = z.object({
   email: z.email("请输入有效的邮箱地址。"),
@@ -29,6 +30,7 @@ const loginSchema = z.object({
 })
 
 export function LoginPage() {
+  useDocumentTitle("登录")
   const api = useAgendaApi()
   const { login } = useSession()
   const navigate = useNavigate()
@@ -78,20 +80,24 @@ export function LoginPage() {
     <main className="flex min-h-svh flex-col bg-muted/30">
       <header className="flex h-14 items-center px-4 md:px-6">
         <div className="flex items-center gap-2 font-semibold" translate="no">
-          <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Bot className="size-4" aria-hidden="true" />
-          </span>
+          <img
+            src="/logo-icon.png"
+            alt=""
+            className="size-7"
+            width={28}
+            height={28}
+          />
           Agenda Quest
         </div>
       </header>
-      <div className="flex flex-1 items-center justify-center md:p-6">
-        <Card className="w-full max-w-sm rounded-none border-x-0 md:rounded-lg md:border-x">
+      <div className="flex flex-1 justify-center md:items-center md:p-6">
+        <Card className="w-full rounded-none ring-0 md:max-w-sm md:rounded-xl md:ring-1">
           <CardHeader>
             <CardTitle>
               <h1 className="text-xl text-pretty">登录你的工作区</h1>
             </CardTitle>
           </CardHeader>
-          <form onSubmit={submit} noValidate>
+          <form onSubmit={submit} noValidate className="flex flex-1 flex-col">
             <CardContent>
               <FieldGroup>
                 {api.mode === "preview" ? (
@@ -139,7 +145,7 @@ export function LoginPage() {
                 {requestError ? <FieldError>{requestError}</FieldError> : null}
               </FieldGroup>
             </CardContent>
-            <CardFooter className="flex-col gap-3">
+            <CardFooter className="mt-auto flex-col gap-3">
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <Loader2

@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-本地预览必须显式设置 `VITE_DATA_MODE=preview`，同时不得设置 `VITE_API_BASE_URL`。预览数据不会持久化，长期记忆、Agent、截图分析服务和云同步均显示为未连接。未声明数据模式时，客户端会阻止进入业务页，不会自行选择或回退数据来源。
+本地预览必须显式设置 `VITE_DATA_MODE=preview`，同时不得设置 `VITE_API_BASE_URL`。预览样本集中维护在 `src/mocks/preview-agenda.mock.ts`，不会持久化；长期记忆、Agent、截图分析服务和云同步均显示为未连接。未声明数据模式时，客户端会阻止进入业务页，不会自行选择或回退数据来源。
 
 ## 云端模式
 

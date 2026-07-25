@@ -21,7 +21,7 @@ export function CapabilitySettings({
       title="能力状态"
       description="高级能力状态直接来自服务端；浏览器捕获能力单独检测。"
     >
-      <div className="max-w-3xl divide-y border-y">
+      <div className="divide-y border-y">
         {capabilities.map((capability) => {
           const Icon = icons[capability.id]
           return (

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
 import { AgendaApiProvider } from "@/api/api-context"
 import { SessionProvider } from "@/auth/session-context"
+import { ColorThemeProvider } from "@/components/color-theme-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -24,16 +25,21 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="agenda-quest-theme">
-      <QueryClientProvider client={queryClient}>
-        <AgendaApiProvider>
-          <SessionProvider>
-            <TooltipProvider delayDuration={300}>
-              <AppUiProvider>{children}</AppUiProvider>
-            </TooltipProvider>
-            <Toaster richColors closeButton />
-          </SessionProvider>
-        </AgendaApiProvider>
-      </QueryClientProvider>
+      <ColorThemeProvider
+        defaultColorTheme="green"
+        storageKey="agenda-quest-color-theme"
+      >
+        <QueryClientProvider client={queryClient}>
+          <AgendaApiProvider>
+            <SessionProvider>
+              <TooltipProvider delayDuration={300}>
+                <AppUiProvider>{children}</AppUiProvider>
+              </TooltipProvider>
+              <Toaster richColors closeButton />
+            </SessionProvider>
+          </AgendaApiProvider>
+        </QueryClientProvider>
+      </ColorThemeProvider>
     </ThemeProvider>
   )
 }

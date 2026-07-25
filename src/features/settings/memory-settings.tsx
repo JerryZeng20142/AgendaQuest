@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { useAgendaActions } from "@/features/agenda/use-agenda"
 import { SettingsSection } from "@/features/settings/settings-section"
 import { formatDateTime } from "@/lib/format"
@@ -86,7 +87,7 @@ export function MemorySettings({
       title="记忆与数据"
       description="查看长期记忆及其原始记录来源。"
     >
-      <div className="flex max-w-3xl flex-col gap-4">
+      <div className="flex flex-col gap-4">
         {!canMutate ? (
           <Alert>
             <LockKeyhole aria-hidden="true" />
@@ -163,19 +164,21 @@ export function MemorySettings({
             <DialogTitle>修改记忆内容</DialogTitle>
             <DialogDescription>修改后会保留原始记录来源。</DialogDescription>
           </DialogHeader>
-          <Textarea
-            name="memoryContent"
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
-            className="min-h-28 resize-none"
-            aria-label="记忆内容"
-            autoComplete="off"
-          />
-          {error ? (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-          ) : null}
+          <Field data-invalid={Boolean(error)}>
+            <FieldLabel htmlFor="memory-content" className="sr-only">
+              记忆内容
+            </FieldLabel>
+            <Textarea
+              id="memory-content"
+              name="memoryContent"
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+              className="min-h-28 resize-none"
+              aria-invalid={Boolean(error)}
+              autoComplete="off"
+            />
+            {error ? <FieldError>{error}</FieldError> : null}
+          </Field>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditTarget(null)}>
               取消

@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react"
-import { Loader2 } from "lucide-react"
+import { AlertCircle, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -36,6 +37,12 @@ const weekdays = [
   "星期日",
 ]
 
+const channelLabels = {
+  "in-app": "应用内",
+  push: "推送",
+  email: "邮件",
+} as const
+
 export function WeeklySettings({ value }: { value: WeeklyReportSchedule }) {
   const { updateWeeklySchedule } = useAgendaActions()
   const [settings, setSettings] = useState(value)
@@ -69,7 +76,7 @@ export function WeeklySettings({ value }: { value: WeeklyReportSchedule }) {
       title="产品行为周报"
       description="设置每周固定生成和推送时间。"
     >
-      <form onSubmit={submit} className="max-w-2xl">
+      <form onSubmit={submit}>
         <FieldGroup>
           <Field orientation="horizontal">
             <FieldContent>
@@ -155,22 +162,19 @@ export function WeeklySettings({ value }: { value: WeeklyReportSchedule }) {
                       toggleChannel(channel, checked === true)
                     }
                     disabled={!settings.enabled}
+                    aria-label={`通过${channelLabels[channel]}推送周报`}
                   />
-                  <FieldTitle>
-                    {channel === "in-app"
-                      ? "应用内"
-                      : channel === "push"
-                        ? "推送"
-                        : "邮件"}
-                  </FieldTitle>
+                  <FieldTitle>{channelLabels[channel]}</FieldTitle>
                 </Field>
               </FieldLabel>
             ))}
           </div>
           {error ? (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
+            <Alert variant="destructive">
+              <AlertCircle aria-hidden="true" />
+              <AlertTitle>周报计划未保存</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           ) : null}
           <Button type="submit" disabled={updateWeeklySchedule.isPending}>
             {updateWeeklySchedule.isPending ? (

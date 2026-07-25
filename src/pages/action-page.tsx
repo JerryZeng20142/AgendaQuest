@@ -8,6 +8,7 @@ import {
   Clock3,
   FileText,
   Loader2,
+  MoreHorizontal,
   Plus,
   Search,
   Split,
@@ -16,23 +17,20 @@ import {
 import { Link, useSearchParams } from "react-router"
 import { toast } from "sonner"
 
-import { useAgendaApi } from "@/api/api-context"
 import { PageEmpty, PageError, PageLoading } from "@/components/page-state"
+import { useDocumentTitle } from "@/hooks/use-document-title"
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
@@ -42,6 +40,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Field,
   FieldGroup,
@@ -54,6 +59,12 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+//
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Tooltip,
@@ -80,6 +91,302 @@ const actionViews: Array<{ value: ActionView; label: string }> = [
   { value: "in-progress", label: "进行中" },
   { value: "completed", label: "已完成" },
 ]
+
+const SNOOZE_PRESETS = [
+  { label: "1 小时后", resolve: () => new Date(Date.now() + 60 * 60 * 1000) },
+  {
+    label: "明天早上",
+    resolve: () => {
+      const d = new Date()
+      d.setDate(d.getDate() + 1)
+      d.setHours(9, 0, 0, 0)
+      return d
+    },
+  },
+  {
+    label: "下周",
+    resolve: () => {
+      const d = new Date()
+      d.setDate(d.getDate() + 7)
+      d.setHours(9, 0, 0, 0)
+      return d
+    },
+  },
+]
+
+/** Compact one-line display for a single task. */
+function TaskRow({
+  task,
+  runs,
+  agentCapability,
+  pending,
+  onUpdateDetails,
+  onStart,
+  onPostpone,
+  onComplete,
+  onEdit,
+  onAgent,
+  onArchive,
+  // onCancelRun — available when agent run cancellation is wired through
+  onDelete,
+}: {
+  task: AgendaTask
+  runs: AgentRun[]
+  agentCapability: Capability | undefined
+  pending: boolean
+  onUpdateDetails(task: AgendaTask): void
+  onStart(task: AgendaTask): void
+  onPostpone(task: AgendaTask): void
+  onComplete(task: AgendaTask): void
+  onEdit(task: AgendaTask): void
+  onAgent(task: AgendaTask): void
+  onArchive(task: AgendaTask): void
+  onDelete(task: AgendaTask): void
+}) {
+  const [deleteOpen, setDeleteOpen] = useState(false)
+
+  const mainButton = (
+    <button
+      type="button"
+      className="task-feed-main"
+      onClick={() => onEdit(task)}
+    >
+      <span className="task-feed-meta">
+        <Badge
+          variant={
+            task.status === "pending"
+              ? "secondary"
+              : task.status === "completed"
+                ? "outline"
+                : "default"
+          }
+        >
+          {taskStatusLabel(task.status)}
+        </Badge>
+        {task.dueAt ? (
+          <>
+            <CalendarClock className="size-3" aria-hidden="true" />
+            <span>{formatDateTime(task.dueAt)}</span>
+          </>
+        ) : null}
+      </span>
+      <strong>{task.title}</strong>
+    </button>
+  )
+
+  return (
+    <div
+      className="task-feed-item"
+      aria-labelledby={`task-${task.id}`}
+    >
+      <div className="flex min-w-0 flex-1 items-start gap-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          {mainButton}
+          <p className="truncate text-xs text-muted-foreground" title={task.nextAction}>
+            {task.nextAction}
+          </p>
+          {task.steps.length ? (
+            <div className="mt-2 flex flex-col gap-1">
+              {task.steps.map((step) => (
+                <label
+                  key={step.id}
+                  className="flex cursor-pointer items-start gap-2 py-0.5 text-sm"
+                >
+                  <Checkbox
+                    checked={step.completed}
+                    onCheckedChange={(checked) =>
+                      onUpdateDetails({
+                        ...task,
+                        steps: task.steps.map((item) =>
+                          item.id === step.id
+                            ? { ...item, completed: checked === true }
+                            : item
+                        ),
+                      })
+                    }
+                    disabled={pending || task.status === "completed"}
+                    aria-label={`${step.label}${step.completed ? "（已完成）" : ""}`}
+                  />
+                  <span
+                    className={
+                      step.completed
+                        ? "text-muted-foreground line-through"
+                        : "break-words"
+                    }
+                  >
+                    {step.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <footer className="task-feed-actions">
+        {task.status === "archived" ? (
+          <Button size="sm" variant="ghost" onClick={() => onDelete(task)}>
+            <Trash2 data-icon="inline-start" aria-hidden="true" />
+            删除
+          </Button>
+        ) : task.status === "completed" ? (
+          <>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onArchive(task)}
+              disabled={pending}
+            >
+              <Archive data-icon="inline-start" aria-hidden="true" />
+              归档
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-sm" aria-label="更多操作">
+                  <MoreHorizontal aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onDelete(task)}>
+                  <Trash2 />删除任务
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        ) : (
+          <>
+            {(task.status === "pending" || task.status === "now") && (
+              <Button
+                size="sm"
+                onClick={() => onStart(task)}
+                disabled={pending}
+              >
+                <CirclePlay data-icon="inline-start" aria-hidden="true" />
+                开始
+              </Button>
+            )}
+            {task.status !== "in-progress" && task.status !== "pending" ? null : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      size="sm"
+                      onClick={() => onAgent(task)}
+                      disabled={agentCapability?.state !== "available"}
+                    >
+                      <Bot data-icon="inline-start" aria-hidden="true" />
+                      交给 Agent
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {agentCapability?.state !== "available" ? (
+                  <TooltipContent>
+                    {agentCapability?.detail ?? "Agent 状态未知"}
+                  </TooltipContent>
+                ) : null}
+              </Tooltip>
+            )}
+            <Button size="sm" variant="ghost" onClick={() => onComplete(task)} disabled={pending}>
+              <Check data-icon="inline-start" aria-hidden="true" />
+              完成
+            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon-sm" aria-label="推迟">
+                  <Clock3 aria-hidden="true" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-40 p-1">
+                <div className="flex flex-col gap-0.5">
+                  {SNOOZE_PRESETS.map((preset) => (
+                    <Button
+                      key={preset.label}
+                      variant="ghost"
+                      size="sm"
+                      className="justify-start"
+                      onClick={() => {
+                        onPostpone({
+                          ...task,
+                          dueAt: preset.resolve().toISOString(),
+                        })
+                      }}
+                    >
+                      {preset.label}
+                    </Button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-sm" aria-label="更多">
+                  <MoreHorizontal aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onEdit(task)}>
+                  <Split />调整 / 拆分
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to={`/inbox?record=${encodeURIComponent(task.recordId)}`}>
+                    <FileText />查看来源
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  <Trash2 />删除任务
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        )}
+      </footer>
+
+      {runs.length ? (
+        <details className="mt-2 text-xs text-muted-foreground">
+          <summary className="cursor-pointer">
+            Agent 运行记录（{runs.length}）
+          </summary>
+          <div className="mt-1 flex flex-col gap-2 border-l-2 pl-3">
+            {runs.map((run) => (
+              <div key={run.id}>
+                <span className="font-medium">{run.status}</span>
+                {": "}
+                {run.resultSummary ?? run.failureReason ?? ""}
+              </div>
+            ))}
+          </div>
+        </details>
+      ) : null}
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除这个任务？</AlertDialogTitle>
+            <AlertDialogDescription>
+              原始收集记录仍会保留，此操作无法撤销。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                setDeleteOpen(false)
+                onDelete(task)
+              }}
+            >
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}
 
 export function EditTaskDialog({
   task,
@@ -142,11 +449,7 @@ export function EditTaskDialog({
                   onClick={() =>
                     setSteps((items) => [
                       ...items,
-                      {
-                        id: `step_${crypto.randomUUID()}`,
-                        label: "",
-                        completed: false,
-                      },
+                      { id: `step_${crypto.randomUUID()}`, label: "", completed: false },
                     ])
                   }
                 >
@@ -213,247 +516,8 @@ export function EditTaskDialog({
   )
 }
 
-function TaskCard({
-  task,
-  runs,
-  agentCapability,
-  pending,
-  onUpdateDetails,
-  onStart,
-  onPostpone,
-  onComplete,
-  onEdit,
-  onAgent,
-  onArchive,
-  onCancelRun,
-}: {
-  task: AgendaTask
-  runs: AgentRun[]
-  agentCapability: Capability | undefined
-  pending: boolean
-  onUpdateDetails(task: AgendaTask): void
-  onStart(task: AgendaTask): void
-  onPostpone(task: AgendaTask): void
-  onComplete(task: AgendaTask): void
-  onEdit(task: AgendaTask): void
-  onAgent(task: AgendaTask): void
-  onArchive(task: AgendaTask): void
-  onCancelRun(runId: string): void
-}) {
-  return (
-    <Card
-      className="max-md:rounded-none max-md:ring-0"
-      aria-labelledby={`task-${task.id}`}
-    >
-      <CardHeader>
-        <div className="flex min-w-0 items-start justify-between gap-3">
-          <div className="flex min-w-0 flex-col gap-1">
-            <CardTitle
-              id={`task-${task.id}`}
-              role="heading"
-              aria-level={2}
-              className="break-words"
-            >
-              {task.title}
-            </CardTitle>
-            <p className="text-sm break-words text-muted-foreground">
-              下一步：{task.nextAction}
-            </p>
-          </div>
-          <Badge
-            variant={task.priority === "urgent" ? "destructive" : "outline"}
-          >
-            {taskStatusLabel(task.status)}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <CalendarClock className="size-3.5" aria-hidden="true" />
-            {formatDateTime(task.dueAt)}
-          </span>
-          <span className="tabular-nums">延期 {task.postponeCount} 次</span>
-          <span className="font-mono" translate="no">
-            rev {task.revision}
-          </span>
-        </div>
-        {task.steps.length ? (
-          <div className="flex flex-col gap-2">
-            {task.steps.map((step) => (
-              <label
-                key={step.id}
-                className="flex cursor-pointer items-start gap-3 rounded-md py-1 text-sm"
-              >
-                <Checkbox
-                  checked={step.completed}
-                  onCheckedChange={(checked) =>
-                    onUpdateDetails({
-                      ...task,
-                      steps: task.steps.map((item) =>
-                        item.id === step.id
-                          ? { ...item, completed: checked === true }
-                          : item
-                      ),
-                    })
-                  }
-                  disabled={pending || task.status === "completed"}
-                  aria-label={`完成步骤：${step.label}`}
-                />
-                <span
-                  className={
-                    step.completed
-                      ? "text-muted-foreground line-through"
-                      : "break-words"
-                  }
-                >
-                  {step.label}
-                </span>
-              </label>
-            ))}
-          </div>
-        ) : null}
-        {runs.length ? (
-          <Accordion type="single" collapsible>
-            <AccordionItem value="runs" className="border-0">
-              <AccordionTrigger className="py-2">
-                Agent 运行记录（{runs.length}）
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="flex flex-col gap-3">
-                  {runs.map((run) => (
-                    <div
-                      key={run.id}
-                      className="flex items-start justify-between gap-3 border-b pb-2 last:border-0"
-                    >
-                      <div className="min-w-0 text-xs">
-                        <div className="mb-1 flex items-center gap-2">
-                          <Badge variant="outline">{run.status}</Badge>
-                          <span>{run.permissionScope}</span>
-                        </div>
-                        <p className="break-words text-muted-foreground">
-                          {run.resultSummary ??
-                            run.failureReason ??
-                            run.logs.at(-1)?.message ??
-                            "等待云端状态更新。"}
-                        </p>
-                        <div className="mt-3 flex flex-col gap-2">
-                          <p className="font-medium">执行动作</p>
-                          <ol className="flex flex-col gap-1">
-                            {run.actions.map((action, index) => (
-                              <li key={action.id}>
-                                {index + 1}. {action.label}（{action.status}）
-                              </li>
-                            ))}
-                          </ol>
-                          <p className="pt-1 font-medium">完整日志</p>
-                          {run.logs.length ? (
-                            <ol className="flex flex-col gap-1">
-                              {run.logs.map((log, index) => (
-                                <li key={`${log.at}-${index}`}>
-                                  <time dateTime={log.at}>
-                                    {formatDateTime(log.at)}
-                                  </time>
-                                  ：{log.message}
-                                </li>
-                              ))}
-                            </ol>
-                          ) : (
-                            <p className="text-muted-foreground">暂无日志。</p>
-                          )}
-                        </div>
-                      </div>
-                      {run.status === "queued" || run.status === "running" ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onCancelRun(run.id)}
-                        >
-                          取消运行
-                        </Button>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        ) : null}
-      </CardContent>
-      <CardFooter className="flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" asChild>
-          <Link to={`/inbox?record=${encodeURIComponent(task.recordId)}`}>
-            <FileText data-icon="inline-start" aria-hidden="true" />
-            查看原始记录
-          </Link>
-        </Button>
-        {task.status === "archived" ? null : task.status !== "completed" ? (
-          <>
-            {task.status !== "in-progress" ? (
-              <Button
-                size="sm"
-                onClick={() => onStart(task)}
-                disabled={pending}
-              >
-                <CirclePlay data-icon="inline-start" aria-hidden="true" />
-                开始执行
-              </Button>
-            ) : null}
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onPostpone(task)}
-              disabled={pending}
-            >
-              <Clock3 data-icon="inline-start" aria-hidden="true" />
-              延后 1 天
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => onEdit(task)}>
-              <Split data-icon="inline-start" aria-hidden="true" />
-              调整 / 拆分
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onComplete(task)}
-              disabled={pending}
-            >
-              <Check data-icon="inline-start" aria-hidden="true" />
-              标记完成
-            </Button>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span>
-                  <Button
-                    size="sm"
-                    onClick={() => onAgent(task)}
-                    disabled={agentCapability?.state !== "available"}
-                  >
-                    <Bot data-icon="inline-start" aria-hidden="true" />
-                    交给 Agent
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              {agentCapability?.state !== "available" ? (
-                <TooltipContent>
-                  {agentCapability?.detail ?? "Agent 状态未知"}
-                </TooltipContent>
-              ) : null}
-            </Tooltip>
-          </>
-        ) : (
-          <Button size="sm" variant="outline" onClick={() => onArchive(task)}>
-            <Archive data-icon="inline-start" aria-hidden="true" />
-            归档任务
-          </Button>
-        )}
-      </CardFooter>
-    </Card>
-  )
-}
-
 export default function ActionPage() {
-  const api = useAgendaApi()
+  useDocumentTitle("行动")
   const snapshot = useAgendaSnapshot()
   const actions = useAgendaActions()
   const [params, setParams] = useSearchParams()
@@ -506,27 +570,16 @@ export default function ActionPage() {
         dueAt: task.dueAt,
         steps: task.steps,
       })
-      toast.success(
-        api.mode === "cloud"
-          ? "任务已更新并进入同步队列。"
-          : "任务已在当前预览会话中更新。"
-      )
       return true
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "任务更新失败，请刷新后重试。"
-      )
+      toast.error(error instanceof Error ? error.message : "任务更新失败，请刷新后重试。")
       return false
     }
   }
 
   const startTask = async (task: AgendaTask) => {
     try {
-      await actions.startTask.mutateAsync({
-        taskId: task.id,
-        revision: task.revision,
-      })
-      toast.success("任务已开始执行。")
+      await actions.startTask.mutateAsync({ taskId: task.id, revision: task.revision })
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "任务未能开始。")
     }
@@ -534,12 +587,7 @@ export default function ActionPage() {
 
   const postponeTask = async (task: AgendaTask) => {
     try {
-      await actions.postponeTask.mutateAsync({
-        taskId: task.id,
-        revision: task.revision,
-        days: 1,
-      })
-      toast.success("任务已延后 1 天。")
+      await actions.postponeTask.mutateAsync({ taskId: task.id, revision: task.revision, days: 1 })
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "任务未能延期。")
     }
@@ -547,15 +595,7 @@ export default function ActionPage() {
 
   const completeTask = async (task: AgendaTask) => {
     try {
-      await actions.completeTask.mutateAsync({
-        taskId: task.id,
-        revision: task.revision,
-      })
-      toast.success(
-        api.mode === "cloud"
-          ? "任务已完成，云端将同步处理提醒与审计记录。"
-          : "任务已在当前预览会话中标记完成。"
-      )
+      await actions.completeTask.mutateAsync({ taskId: task.id, revision: task.revision })
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "任务未能完成。")
     }
@@ -576,16 +616,16 @@ export default function ActionPage() {
     }
   }
 
-  const cancelRun = async (runId: string) => {
+  const deleteTask = async (task: AgendaTask) => {
     try {
-      await actions.cancelAgentRun.mutateAsync(runId)
-      toast.success("已请求取消 Agent 运行。")
+      await actions.deleteTask.mutateAsync(task.id)
+      toast.success("任务已永久删除。")
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Agent 运行未能取消。"
-      )
+      toast.error(error instanceof Error ? error.message : "任务删除失败。")
     }
   }
+
+  // cancelAgentRun is available via useAgendaActions but not wired through TaskRow yet
 
   if (snapshot.isLoading) return <PageLoading />
   if (snapshot.isError)
@@ -598,8 +638,8 @@ export default function ActionPage() {
 
   return (
     <div className="py-3 md:p-6">
-      <h1 className="sr-only">行动台</h1>
-      <div className="mb-4 flex flex-col gap-3 px-4 md:px-0 lg:flex-row lg:items-center lg:justify-between">
+      <h1 className="sr-only">行动</h1>
+      <div className="mb-4 flex flex-col gap-3 px-4 md:mx-auto md:max-w-5xl md:px-0 lg:flex-row lg:items-center lg:justify-between">
         <Tabs
           value={view}
           onValueChange={(value) => updateParam("view", value)}
@@ -628,9 +668,9 @@ export default function ActionPage() {
         </InputGroup>
       </div>
       {tasks.length ? (
-        <div className="flex flex-col gap-3 md:mx-auto md:max-w-5xl">
+        <div className="act-feed md:mx-auto md:max-w-5xl">
           {tasks.map((task) => (
-            <TaskCard
+            <TaskRow
               key={task.id}
               task={task}
               runs={(snapshot.data?.agentRuns ?? []).filter(
@@ -645,7 +685,7 @@ export default function ActionPage() {
               onEdit={setEditTask}
               onAgent={setAgentTask}
               onArchive={(nextTask) => void archiveTask(nextTask)}
-              onCancelRun={(runId) => void cancelRun(runId)}
+              onDelete={(nextTask) => void deleteTask(nextTask)}
             />
           ))}
         </div>

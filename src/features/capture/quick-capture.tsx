@@ -303,7 +303,8 @@ function CaptureForm({
 export function QuickCapture() {
   const api = useAgendaApi()
   const isMobile = useIsMobile()
-  const { quickCaptureOpen, setQuickCaptureOpen } = useAppUi()
+  const { quickCaptureOpen, setQuickCaptureOpen, quickCaptureReturnFocusRef } =
+    useAppUi()
   const [content, setContent] = useState("")
   const [attachments, setAttachments] = useState<File[]>([])
   const [persistedRecordId, setPersistedRecordId] = useState<string | null>(
@@ -334,6 +335,15 @@ export function QuickCapture() {
     setQuickCaptureOpen(false)
   }
 
+  // 受控 Dialog 无 DialogTrigger，关闭时手动归还焦点到打开时的触发元素。
+  const restoreFocus = (event: Event) => {
+    const target = quickCaptureReturnFocusRef.current
+    if (target?.isConnected) {
+      event.preventDefault()
+      target.focus()
+    }
+  }
+
   const form = (
     <CaptureForm
       content={content}
@@ -351,7 +361,7 @@ export function QuickCapture() {
     <>
       {isMobile ? (
         <Drawer open={quickCaptureOpen} onOpenChange={requestOpenChange}>
-          <DrawerContent>
+          <DrawerContent onCloseAutoFocus={restoreFocus}>
             <DrawerHeader className="text-left">
               <DrawerTitle>快速记录</DrawerTitle>
               <DrawerDescription>
@@ -365,7 +375,7 @@ export function QuickCapture() {
         </Drawer>
       ) : (
         <Dialog open={quickCaptureOpen} onOpenChange={requestOpenChange}>
-          <DialogContent>
+          <DialogContent onCloseAutoFocus={restoreFocus}>
             <DialogHeader>
               <DialogTitle>快速记录</DialogTitle>
               <DialogDescription>
