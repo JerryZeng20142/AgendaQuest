@@ -51,12 +51,11 @@ export default function SettingsPage() {
   )
 
   return (
-    <div className="py-3 md:p-6">
+    <div className="min-h-0 flex-1 overflow-y-auto py-3 md:p-6">
       <h1 className="sr-only">设置</h1>
       <Tabs
         value={tab}
         onValueChange={setTab}
-        className="md:mx-auto md:max-w-5xl"
       >
         <div className="overflow-x-auto border-b px-4 md:px-0">
           <TabsList variant="line" className="min-w-max">
@@ -67,7 +66,7 @@ export default function SettingsPage() {
             ))}
           </TabsList>
         </div>
-        <div className="px-4 pt-6 md:px-0">
+        <div className="px-4 pt-6 md:mx-auto md:max-w-2xl md:px-0">
           <TabsContent value="general">
             <AccountSettings />
           </TabsContent>
