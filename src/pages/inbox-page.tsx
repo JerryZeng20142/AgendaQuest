@@ -4,6 +4,8 @@ import {
   ArrowRight,
   ArrowUpDown,
   Bot,
+  ChevronDown,
+  ChevronRight,
   Clock3,
   Download,
   Layers3,
@@ -136,13 +138,11 @@ function RecordRow({
     }
   }
 
-  // Compute display label — show AI analysis first, fall back to record content
+  // Compute display label — show AI summary title unconditionally in collapsed state
   const summaryTitle =
-    record.analysis.title ??
-    (record.rawContent
-      ? record.rawContent.length > 120
-        ? record.rawContent.slice(0, 120) + "…"
-        : record.rawContent
+    record.analysis.title?.trim()
+    ?? (record.rawContent
+      ? (record.rawContent.length > 120 ? record.rawContent.slice(0, 120) + "…" : record.rawContent)
       : "原始内容已按保留策略删除。")
 
   return (
@@ -154,20 +154,29 @@ function RecordRow({
       <div className="task-feed-item">
         <div className="flex min-w-0 items-start justify-between gap-3">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
-            {/* AI summary / raw content */}
+            {/* AI summary — always visible */}
             <CollapsibleTrigger asChild>
               <button
                 type="button"
                 className="task-feed-main"
+                aria-expanded={open}
               >
-                <span className="text-left font-medium text-foreground break-words">
-                  {summaryTitle}
+                <span className="flex items-start gap-2 text-left font-medium text-foreground break-words">
+                  <span className="mt-0.5 shrink-0 text-muted-foreground">
+                    {open ? (
+                      <ChevronDown className="size-4" aria-hidden="true" />
+                    ) : (
+                      <ChevronRight className="size-4" aria-hidden="true" />
+                    )}
+                  </span>
+                  <span>{summaryTitle}</span>
                 </span>
               </button>
             </CollapsibleTrigger>
             {/* Source + date */}
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               <span>{record.source}</span>
+              <span aria-hidden="true">·</span>
               <time dateTime={record.createdAt}>
                 {formatDateTime(record.createdAt)}
               </time>
@@ -454,7 +463,7 @@ export default function InboxPage() {
       <h1 className="sr-only">收集</h1>
       {/* Filters */}
       <div className="mb-4 flex flex-col gap-3 px-4 md:mx-auto md:max-w-5xl md:px-0">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2">
             <Select
               value={flow}
@@ -517,7 +526,7 @@ export default function InboxPage() {
               </SelectContent>
             </Select>
           </div>
-          <InputGroup className="w-full lg:max-w-xs">
+          <InputGroup className="w-full sm:max-w-xs">
             <InputGroupAddon>
               <Search aria-hidden="true" />
             </InputGroupAddon>
@@ -526,7 +535,7 @@ export default function InboxPage() {
               value={query}
               onChange={(event) => updateParam("q", event.target.value)}
               placeholder="搜索原文、话题或任务"
-              aria-label="搜索收集"
+              aria-label="搜索"
               autoComplete="off"
             />
           </InputGroup>

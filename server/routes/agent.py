@@ -83,7 +83,7 @@ async def authorize_agent_run(
     run = AgentRun(
         id=str(uuid.uuid4()),
         user_id=user.id,
-        task_id=authorize_data.confirmationId,  # This would normally be from the plan
+        task_id=authorize_data.confirmationId,
         risk="low",
         status="queued",
         actions=[{"id": aid, "label": "Action", "status": "pending"} for aid in authorize_data.confirmedActionIds],

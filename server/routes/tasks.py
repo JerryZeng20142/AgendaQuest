@@ -49,6 +49,15 @@ async def create_task(
     if not record:
         raise HTTPException(status_code=404, detail="Record not found")
     
+    # Idempotency check using clientRequestId
+    if idempotency_key:
+        existing = await db.execute(
+            select(Task).where(Task.id == idempotency_key, Task.user_id == user.id)
+        )
+        existing_task = existing.scalar_one_or_none()
+        if existing_task:
+            return task_to_response(existing_task)
+
     now = datetime.utcnow()
     
     # Convert steps from strings to objects
@@ -61,7 +70,7 @@ async def create_task(
         })
     
     task = Task(
-        id=idempotency_key or str(uuid.uuid4()),
+        id=str(uuid.uuid4()),
         user_id=user.id,
         record_id=task_data.recordId,
         title=task_data.title,
@@ -72,9 +81,12 @@ async def create_task(
         steps=steps,
         created_at=now,
         postpone_count=0,
-        revision=0
+        revision=1,
     )
-    
+
+    if idempotency_key:
+        task.id = idempotency_key
+
     db.add(task)
     
     # Update record with task_id

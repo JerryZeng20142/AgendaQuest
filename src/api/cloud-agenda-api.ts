@@ -264,7 +264,7 @@ export class CloudAgendaApi implements AgendaApi {
   }
 
   cancelAgentRun(runId: string) {
-    return this.client.request<void>(`/agent-runs/${runId}/cancel`, {
+    return this.client.request<void>(`/agent-plans/${runId}/cancel`, {
       method: "POST",
     })
   }
@@ -339,7 +339,7 @@ export class CloudAgendaApi implements AgendaApi {
 
   getSyncStatus() {
     return this.client
-      .request<unknown>("/sync/status")
+      .request<unknown>("/agenda/status")
       .then((data) => parseApiResponse<SyncStatus>(syncStatusSchema, data))
   }
 }

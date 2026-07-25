@@ -17,7 +17,7 @@ import {
 import { Link, useSearchParams } from "react-router"
 import { toast } from "sonner"
 
-import { PageEmpty, PageError, PageLoading } from "@/components/page-state"
+import { PageEmpty, PageError, FeedLoading } from "@/components/page-state"
 import { useDocumentTitle } from "@/hooks/use-document-title"
 import {
   AlertDialog,
@@ -627,7 +627,7 @@ export default function ActionPage() {
 
   // cancelAgentRun is available via useAgendaActions but not wired through TaskRow yet
 
-  if (snapshot.isLoading) return <PageLoading />
+  if (snapshot.isLoading) return <FeedLoading />
   if (snapshot.isError)
     return (
       <PageError

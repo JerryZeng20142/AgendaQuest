@@ -15,10 +15,8 @@ from routes import auth, records, tasks, memories, settings as settings_route, a
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize database
     await init_db()
-    
-    # Create default user if not exists
+
     async with async_session_maker() as db:
         result = await db.execute(select(User).where(User.email == "demo@agendaquest.com"))
         if not result.scalar_one_or_none():
@@ -26,16 +24,15 @@ async def lifespan(app: FastAPI):
                 email="demo@agendaquest.com",
                 password_hash=get_password_hash("demo123"),
                 display_name="Demo User",
-                onboarding_completed=False
+                onboarding_completed=False,
             )
             db.add(user)
             await db.flush()
-            
-            # Create default settings
+
             user_settings = UserSettings(user_id=user.id)
             db.add(user_settings)
             await db.commit()
-    
+
     yield
 
 
@@ -68,6 +65,14 @@ app.include_router(memories.router, prefix="/memories", tags=["memories"])
 app.include_router(settings_route.router, prefix="/settings", tags=["settings"])
 app.include_router(agent.router, prefix="/agent-plans", tags=["agent"])
 app.include_router(events.router, prefix="/events", tags=["events"])
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"message": "服务器内部错误，请稍后重试。"},
+    )
 
 
 @app.get("/")

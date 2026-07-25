@@ -77,7 +77,7 @@ class Task(Base):
     archived_at = Column(DateTime, nullable=True)
     completion_summary = Column(Text, nullable=True)
     postpone_count = Column(Integer, default=0)
-    revision = Column(Integer, default=0)
+    revision = Column(Integer, default=1)
     
     user = relationship("User", back_populates="tasks")
     agent_runs = relationship("AgentRun", back_populates="task", cascade="all, delete-orphan")

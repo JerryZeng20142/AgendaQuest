@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router"
 
-import { PageError, PageLoading } from "@/components/page-state"
+import { PageError, SettingsLoading } from "@/components/page-state"
 import { useDocumentTitle } from "@/hooks/use-document-title"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AccountSettings } from "@/features/settings/account-settings"
@@ -31,7 +31,7 @@ export default function SettingsPage() {
     settingTabs.find((item) => item.value === tab)?.label ?? "设置"
   useDocumentTitle(`设置 · ${tabLabel}`)
 
-  if (snapshot.isLoading) return <PageLoading />
+  if (snapshot.isLoading) return <SettingsLoading />
   if (snapshot.isError)
     return (
       <PageError

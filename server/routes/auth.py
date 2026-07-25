@@ -40,13 +40,16 @@ async def login(
     # Create access token
     access_token = create_access_token(data={"sub": user.id})
     
-    # Set cookie
+    # Set cookie with secure defaults for HTTPS; allow HTTP for local dev
+    import os
     response.set_cookie(
         key="access_token",
         value=f"Bearer {access_token}",
         httponly=True,
-        max_age=86400,  # 24 hours
-        samesite="lax"
+        secure=bool(os.environ.get("HTTPS", False)),
+        samesite="lax",
+        max_age=86400,
+        path="/",
     )
     
     return SessionResponse(
@@ -57,7 +60,7 @@ async def login(
 
 @router.post("/logout")
 async def logout(response: Response):
-    response.delete_cookie("access_token")
+    response.delete_cookie("access_token", path="/")
     return {"message": "Logged out successfully"}
 
 

@@ -227,10 +227,10 @@ async def get_attachment_download(
     # In production, this would be a signed URL
     # For now, return a placeholder
     now = datetime.utcnow()
-    expires_at = (now.replace(hour=23, minute=59, second=59)).isoformat() + "Z"
-    
+    expires_at = (now + timedelta(hours=1)).isoformat() + "Z"
+
     return AttachmentDownload(
-        url=f"/uploads/{attachment.file_path.split('/')[-1]}",
+        url=attachment.file_path,
         expiresAt=expires_at
     )
 
