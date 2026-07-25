@@ -11,4 +11,19 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    proxy: {
+      "/auth": "http://localhost:8000",
+      "/records": "http://localhost:8000",
+      "/tasks": "http://localhost:8000",
+      "/agenda": "http://localhost:8000",
+      "/settings": "http://localhost:8000",
+      "/memories": "http://localhost:8000",
+      "/agent-plans": "http://localhost:8000",
+      "/agent-runs": "http://localhost:8000",
+      "/events": "http://localhost:8000",
+      "/sync": "http://localhost:8000",
+      "/onboarding": "http://localhost:8000",
+    },
+  },
 })
