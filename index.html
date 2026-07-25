@@ -1,10 +1,36 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>vite-app</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="description" content="Agenda Quest 个人行动工作台" />
+    <title>Agenda Quest</title>
+    <script>
+      try {
+        const storedTheme = localStorage.getItem("agenda-quest-theme")
+        const prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches
+        const resolvedTheme =
+          storedTheme === "dark" ||
+          ((storedTheme === null || storedTheme === "system") && prefersDark)
+            ? "dark"
+            : "light"
+        document.documentElement.classList.add(resolvedTheme)
+        document.documentElement.style.colorScheme = resolvedTheme
+        if (resolvedTheme === "dark") {
+          document
+            .querySelector('meta[name="theme-color"]')
+            ?.setAttribute("content", "#0a0a0a")
+        }
+      } catch {
+        // The theme provider applies the configured default after mounting.
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
