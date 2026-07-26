@@ -5,7 +5,7 @@ from datetime import datetime
 from database import get_db
 from models import User, UserSettings
 from schemas import LoginRequest, SessionResponse, UserResponse, OnboardingRequest
-from auth import verify_password, get_password_hash, create_access_token, get_current_user
+from auth import verify_password, get_password_hash, create_access_token, get_current_user, get_optional_user
 
 router = APIRouter()
 
@@ -66,8 +66,10 @@ async def logout(response: Response):
 
 @router.get("/session", response_model=SessionResponse | None)
 async def get_session(
-    user: User = Depends(get_current_user)
+    user: User | None = Depends(get_optional_user)
 ):
+    if user is None:
+        return None
     return SessionResponse(
         user=user_to_response(user),
         authenticatedAt=datetime.utcnow().isoformat() + "Z"

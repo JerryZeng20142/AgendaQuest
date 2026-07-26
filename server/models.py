@@ -143,7 +143,7 @@ class UserSettings(Base):
     })
     retention_policy = Column(JSON, default=lambda: {
         "mode": "keep-full",
-        "updatedAt": datetime.utcnow().isoformat()
+        "updatedAt": datetime.utcnow().isoformat() + "Z"
     })
     
     user = relationship("User", back_populates="settings")

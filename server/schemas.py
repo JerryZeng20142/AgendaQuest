@@ -1,6 +1,29 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel as PydanticBaseModel, EmailStr, Field, field_validator, model_serializer
 from typing import Optional, List, Literal
 from datetime import datetime
+
+
+class BaseModel(PydanticBaseModel):
+    """API schema base: omit None fields when serializing so responses match
+    the client contract (zod .optional() rejects null). Fields the client
+    expects as explicit null (zod .nullable()) go in __keep_none__."""
+    __keep_none__: frozenset = frozenset()
+
+    @model_serializer(mode="wrap")
+    def _omit_none(self, handler):
+        data = handler(self)
+        return {
+            key: value
+            for key, value in data.items()
+            if value is not None or key in self.__keep_none__
+        }
+
+
+def ensure_utc_suffix(value: str) -> str:
+    """Append Z to naive ISO datetimes (legacy rows stored without timezone)."""
+    if value and not value.endswith("Z") and "+" not in value[10:] and "-" not in value[10:]:
+        return value + "Z"
+    return value
 
 
 # Auth schemas
@@ -55,6 +78,10 @@ class RecordAttachment(BaseModel):
 
 
 class AgendaRecord(BaseModel):
+    # Client contract: rawContent is nullable (must stay null when evidence
+    # was removed), everything else optional (omitted when absent).
+    __keep_none__ = frozenset({"rawContent"})
+
     id: str
     rawContent: Optional[str] = None
     retainedSummary: Optional[str] = None
@@ -178,6 +205,11 @@ class RetentionPolicy(BaseModel):
     mode: Literal["keep-full", "keep-summary", "delete-after"]
     deleteAfterDays: Optional[int] = None
     updatedAt: str
+
+    @field_validator("updatedAt")
+    @classmethod
+    def _normalize_updated_at(cls, value: str) -> str:
+        return ensure_utc_suffix(value)
 
 
 class UpdateRetentionPolicyRequest(BaseModel):

@@ -47,6 +47,30 @@ def _decode_token(token: str) -> str:
         raise credentials_exception
 
 
+async def get_optional_user(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+) -> Optional[User]:
+    """Return the current user if valid credentials are present, else None."""
+    auth_header = request.headers.get("authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+    else:
+        cookie_value = request.cookies.get("access_token", "")
+        if cookie_value.startswith("Bearer "):
+            token = cookie_value[7:]
+        else:
+            return None
+
+    try:
+        user_id = _decode_token(token)
+    except HTTPException:
+        return None
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
+
+
 async def get_current_user(
     request: Request,
     db: AsyncSession = Depends(get_db)
